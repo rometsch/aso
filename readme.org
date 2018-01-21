@@ -1,0 +1,32 @@
+#+TITLE: Automatic Scan Optimization
+#+AUTHOR: Thomas Rometsch
+#+PROPERTY: header-args:calc :exports both
+#+PROPERTY: header-args :eval never-export
+
+
+* Description
+This is my attempt to optimize scanned documents using various optimization algorithms.
+
+* Useful resources
++ Trying to find the name of the Hough transformation I stumbled across this
+[[https://stackoverflow.com/questions/15188104/character-recognition-ocr-algorithm][stackoverflow thread]] about ocr which might contain useful information.
+
+* Automatic Rotation
+If there are lines in the document, as it is the case for sheet music, a line recognition
+algorithm can be used to find the angle of the lines and automatically correct the rotation
+of the document.
+One choice is the [[https://en.wikipedia.org/wiki/Hough_transform][Hough transformation]]. It can find straight lines in bitmap images.
+
+First get the python [[https://opencv.org/][OpenCV]] package via
+#+BEGIN_SRC
+pip3 install opencv-python
+pip3 install opencv-contrib-python
+#+END_SRC
+
+Then =opencv= can be imported as
+#+BEGIN_SRC python
+import cv2
+#+END_SRC
+
+where the =2= in =cs2= stands for the second version of the interface
+rather than the version, which should be 3 something.
