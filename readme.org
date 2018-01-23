@@ -23,10 +23,141 @@ pip3 install opencv-python
 pip3 install opencv-contrib-python
 #+END_SRC
 
-Then =opencv= can be imported as
-#+BEGIN_SRC python
-import cv2
-#+END_SRC
-
+Then =opencv= can be imported as =import cv2=
 where the =2= in =cs2= stands for the second version of the interface
 rather than the version, which should be 3 something.
+
+** Example Hough transformation
+
+This section follows the [[https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_imgproc/py_houghlines/py_houghlines.html][online guide]].
+
+Try to find the line in
+[[file:img/simple_line.png]]
+
+#+BEGIN_SRC python :exports both :results file
+import cv2
+import numpy as np
+
+outfile="img/simple_line_out.png"
+infile="img/simple_line.png"
+
+img = cv2.imread(infile)
+#gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+gray = img
+edges = cv2.Canny(gray,50,150,apertureSize = 7)
+
+
+lines = cv2.HoughLines(edges,1,np.pi/180,200)
+for rho,theta in lines[0]:
+    a = np.cos(theta)
+    b = np.sin(theta)
+    x0 = a*rho
+    y0 = b*rho
+    x1 = int(x0 + 1000*(-b))
+    y1 = int(y0 + 1000*(a))
+    x2 = int(x0 - 1000*(-b))
+    y2 = int(y0 - 1000*(a))
+
+    cv2.line(img,(x1,y1),(x2,y2),(0,0,255),2)
+
+cv2.imwrite(outfile,img)
+return outfile
+#+End_SRC
+
+#+RESULTS:
+[[file:img/simple_line_out.png]]
+
+This worked already very nicely out of the box and was very easy.
+
+** More interesting example, a sample from a music sheet.
+
+I get some freely usable [[https://torange.biz/33027.html][sheet music image]] and cropped it to 800x400 px.
+It looks like this
+
+[[file:img/sheet_music.jpg]]
+
+Lets repeat the process.
+
+#+BEGIN_SRC python :exports both :results file
+  import cv2
+  import numpy as np
+
+  outfile="img/sheet_music_out.jpg"
+  infile="img/sheet_music.jpg"
+
+  img = cv2.imread(infile)
+  gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+  gray = img
+  edges = cv2.Canny(gray,50,150,apertureSize = 7)
+
+
+  lines = cv2.HoughLines(edges,1,np.pi/180,320)
+  for line in lines:
+      for rho,theta in line:
+          a = np.cos(theta)
+          b = np.sin(theta)
+          x0 = a*rho
+          y0 = b*rho
+          x1 = int(x0 + 1000*(-b))
+          y1 = int(y0 + 1000*(a))
+          x2 = int(x0 - 1000*(-b))
+          y2 = int(y0 - 1000*(a))
+
+      cv2.line(img,(x1,y1),(x2,y2),(0,0,255),2)
+
+  cv2.imwrite(outfile,img)
+  return outfile
+#+End_SRC
+
+#+RESULTS:
+[[file:img/sheet_music_out.jpg]]
+
+The result is pretty nice, though we see that the source image has some distortions.
+But at this point we don't attempt to fix it.
+
+Also the threshold for the length in the Hough routine call needed some manual fine tuning.
+This can probably be set as a function of the image width.
+
+The goal is to automatically rotate the image.
+So lets use an average of the determined angles and rotate the image back.
+A [[https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_imgproc/py_geometric_transformations/py_geometric_transformations.html?highlight=rotate][tutorial]] how to do it can be read online.
+
+#+BEGIN_SRC python :exports both :results file
+import cv2
+import numpy as np
+
+outfile="img/sheet_music_out.jpg"
+infile="img/sheet_music.jpg"
+
+img = cv2.imread(infile)
+gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+edges = cv2.Canny(gray,50,150,apertureSize = 7)
+
+lines = cv2.HoughLines(edges,1,np.pi/180,320)
+
+thetas = lines[:,0,1]
+rotation_angle = np.mean(thetas) - np.pi/2 # Angles are measured starting at the vertical line
+
+def rotate(img, angle_in_rad):
+    angle_in_deg = angle_in_rad*180/np.pi
+    rows,cols,colors = img.shape
+
+    M = cv2.getRotationMatrix2D((cols/2,rows/2),angle_in_deg,1)
+    return cv2.warpAffine(img,M,(cols,rows))
+
+
+img_rot = rotate(img, rotation_angle)
+
+cv2.imwrite(outfile,img_rot)
+return outfile
+#+End_SRC
+
+#+RESULTS:
+[[file:img/sheet_music_out.jpg]]
+
+This looks very promising already.
+Note that the correct angle for the rotation is calculated as
+\[
+\phi = <\theta> - \frac{\pi}{2}
+\]
+because the angles for the Hough lines are measured beginning at the vertical line.
