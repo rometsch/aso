@@ -126,7 +126,7 @@ A [[https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_imgp
 import cv2
 import numpy as np
 
-outfile="img/sheet_music_rotated.jpg"
+outfile="img/rotated_sheet_music.jpg"
 infile="img/sheet_music.jpg"
 
 img = cv2.imread(infile)
@@ -153,7 +153,7 @@ return outfile
 #+End_SRC
 
 #+RESULTS:
-[[file:img/sheet_music_out.jpg]]
+[[file:img/sheet_music_rotated.jpg]]
 
 This looks very promising already.
 Note that the correct angle for the rotation is calculated as
